@@ -15,5 +15,12 @@ pipeline {
                 sh 'mvn clean package -DskipTests'
             }
         }
+
+        stage('Docker Build') {
+            steps {
+                echo 'Building Docker image...'
+                sh 'docker build -t shiv:1.0 .'
+            }
+        }
     }
 }
