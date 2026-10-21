@@ -59,9 +59,9 @@ pipeline {
                         export ANSIBLE_HOST_KEY_CHECKING=False
 
                         cat > inventory.ini <<EOF
-        [app]
-        ec2 ansible_host=65.1.132.171 ansible_user=$SSH_USER ansible_ssh_private_key_file=$SSH_KEY
-        EOF
+[app]
+ec2 ansible_host=65.1.132.171 ansible_user=$SSH_USER ansible_ssh_private_key_file=$SSH_KEY
+EOF
 
                         ansible-playbook -i inventory.ini setup.yml
                     '''
