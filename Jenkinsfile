@@ -44,9 +44,9 @@ pipeline {
             }
         }
 
-        stage('Ansible Connectivity Test') {
+        stage('Deploy to EC2') {
             steps {
-                echo 'Testing Ansible connection to EC2...'
+                echo 'Deploying application to EC2 using Ansible...'
 
                 withCredentials([
                     sshUserPrivateKey(
@@ -63,7 +63,7 @@ pipeline {
         ec2 ansible_host=65.1.132.171 ansible_user=$SSH_USER ansible_ssh_private_key_file=$SSH_KEY
         EOF
 
-                        ansible -i inventory.ini app -m ping
+                        ansible-playbook -i inventory.ini setup.yml
                     '''
                 }
             }

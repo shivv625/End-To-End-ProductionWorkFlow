@@ -1,0 +1,110 @@
+---
+- name: Setup EC2 server
+  hosts: app
+  become: true
+
+  tasks:
+
+    - name: Install Git
+      dnf:
+        name: git
+        state: present
+
+    - name: Install Docker
+      dnf:
+        name: docker
+        state: present
+
+    - name: Start Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add ec2-user to Docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: true
+
+    # -------------------------
+    # Docker Network
+    # -------------------------
+
+    - name: Create application Docker network
+      community.docker.docker_network:
+        name: shiv-network
+        state: present
+
+    # -------------------------
+    # MySQL
+    # -------------------------
+
+    - name: Start MySQL container
+      community.docker.docker_container:
+        name: shiv-mysql
+        image: mysql:8.0
+        state: started
+        restart_policy: always
+        networks:
+          - name: shiv-network
+        env:
+          MYSQL_ROOT_PASSWORD: "root"
+          MYSQL_DATABASE: "productdb"
+          MYSQL_USER: "shiv"
+          MYSQL_PASSWORD: "password123"
+        volumes:
+          - mysql-data:/var/lib/mysql
+
+    # -------------------------
+    # Wait for MySQL
+    # -------------------------
+
+    - name: Wait for MySQL to become ready
+      ansible.builtin.command:
+        cmd: docker exec shiv-mysql mysqladmin ping -h localhost -uroot -proot
+      register: mysql_ready
+      retries: 20
+      delay: 5
+      until: mysql_ready.rc == 0
+
+    # -------------------------
+    # Spring Boot
+    # -------------------------
+
+    - name: Pull application image
+      community.docker.docker_image:
+        name: shivv625/shiv:1.0
+        source: pull
+
+    - name: Stop existing application container
+      community.docker.docker_container:
+        name: shiv
+        state: absent
+
+    - name: Run Spring Boot application
+      community.docker.docker_container:
+        name: shiv
+        image: shivv625/shiv:1.0
+        state: started
+        restart_policy: always
+        networks:
+          - name: shiv-network
+        published_ports:
+          - "8080:8080"
+        env:
+          SPRING_DATASOURCE_URL: "jdbc:mysql://shiv-mysql:3306/productdb"
+          SPRING_DATASOURCE_USERNAME: "shiv"
+          SPRING_DATASOURCE_PASSWORD:
+            "password123"
+
+    - name: Install Nginx
+      dnf:
+        name: nginx
+        state: present
+
+    - name: Start Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
