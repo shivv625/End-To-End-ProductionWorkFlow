@@ -18,8 +18,11 @@ pipeline {
 
         stage('Docker Build') {
             steps {
+                echo 'Checking JAR for Prometheus...'
+                sh 'jar tf target/*.jar | grep -i prometheus || true'
+
                 echo 'Building Docker image...'
-                sh 'docker build -t shiv:1.0 .'
+                sh 'docker build --no-cache -t shiv:1.0 .'
             }
         }
 
