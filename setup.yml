@@ -88,6 +88,8 @@
         image: shivv625/shiv:1.0
         state: started
         restart_policy: always
+        recreate: true
+        pull: true
         networks:
           - name: shiv-network
         published_ports:
@@ -95,8 +97,7 @@
         env:
           SPRING_DATASOURCE_URL: "jdbc:mysql://shiv-mysql:3306/productdb"
           SPRING_DATASOURCE_USERNAME: "shiv"
-          SPRING_DATASOURCE_PASSWORD:
-            "password123"
+          SPRING_DATASOURCE_PASSWORD: "password123"
 
     - name: Install Nginx
       dnf:
